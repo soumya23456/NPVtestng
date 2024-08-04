@@ -1,0 +1,975 @@
+project name : NpvSeleniumTest
+
+***********Selenium Grid ***********
+parallel testing on local mechine
+https://www.youtube.com/watch?v=mPD44Pm9j2M
+----------
+grid cmd: java -jar selenium-server-4.22.0 .jar standalone 
+----------------
+testNG + grid === using testNG cmd line
+To start Hub
+java -jar selenium-server-standalone-4.22.0.jar -role hub
+To start Nodes
+java -jar selenium-server-standalone.jar -role node -hub http://hub-ip:4444/grid/register
+Verify grid link
+http://hub-ip:4444/Grid/console
+add tesNG dependency
+Write tests assign parallel mode with thread count
+@Test
+<suite name="Parallel Test Suit" parallel="tests" thread-count="5">
+Execute tests with TestNG cmd line runner
+java -cp “path/to/testng.jar:path/to/your/classes” org.testng.TestNG path/to/testng.xml
+****
+Integrating Selenium Grid with TestNG for Parallel Testing
+1.     Updating WebDriver Initialization
+public WebDriver CreateRemoteDriver(String hubUrl, DesiredCapabilities capabilities) throws Exception {
+return new RemoteWebDriver(new URL(hubUrl), capabilities);
+}
+}
+2.     Specifying Desired Capabilities
+public DesiredCapabilities getChromeCapabilities(){
+DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+//set additional capabilities if needed
+return capabilities;
+}
+}
+3.     Running Tests in Parallel
+<test name="Parallel Tests">
+<parameter name="hubUrl" value="http://hub-ip:4444/wd/hub"/>
+<classes>
+<class>
+<parameter name="browser" value="chrome"/>
+4.     Executing the Test Cases
+java -cp “path/to/testng.jar:path/to/your/classes” org.testng.TestNG path/to/testng.xml
+----------------
+TestNG + Grid == TestNG Annotations
+https://www.swtestacademy.com/selenium-parallel-tests-grid-testng/
+with detailed steps
+https://www.guru99.com/introduction-to-selenium-grid.html
+------------------------------------
+***utility class***
+UtilTypes.java(common methods used for every test)
+
+1. browsersetup
+2.footerhighlihgts
+3.highlightElements
+4.mousehover
+
+************************************************
+Commented code
+------------1----------------------
+package testwithselinuim;
+
+import java.util.NoSuchElementException;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
+public class UtilTypes {	
+------------2 footer elements----------------------
+	public void closeCookie(WebDriver driver) {
+		driver.findElement(By.xpath("//button[contains(@class,'cookie-btn')]")).click();
+	}
+	
+	------------3----------------------
+public void highlightElement(WebDriver driver, WebElement element) {
+		JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
+	javascriptExecutor.executeScript("arguments[0].setAttribute('style', 'border: 2px solid black;')", element);
+	}	
+------------4----------------------
+	public void mouseHoverJScript(WebElement HoverElement, WebDriver driver) {
+		try {
+			if (isElementPresent(HoverElement)) {		
+				String mouseOverScript = "if(document.createEvent){var evObj = document.createEvent('MouseEvents');evObj.initEvent('mouseover', true, false); arguments[0].dispatchEvent(evObj);} else if(document.createEventObject) { arguments[0].fireEvent('onmouseover');}";
+			
+				((JavascriptExecutor) driver).executeScript(mouseOverScript,
+						HoverElement);
+			} else {
+				System.out.println("Element was not visible to hover " + "\n");
+
+			}
+		} catch (StaleElementReferenceException e) {
+			System.out.println("Element with " + HoverElement
+					+ "is not attached to the page document"
+					+ e.getStackTrace());
+		} catch (NoSuchElementException e) {
+			System.out.println("Element " + HoverElement + " was not found in DOM"
+					+ e.getStackTrace());
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("Error occurred while hovering"
+					+ e.getStackTrace());
+		}
+	}
+
+	public static boolean isElementPresent(WebElement element) {
+		boolean flag = false;
+		try {
+			if (element.isDisplayed()
+					|| element.isEnabled())
+				flag = true;
+		} catch (NoSuchElementException e) {
+			flag = false;
+		} catch (StaleElementReferenceException e) {
+			flag = false;
+		}
+		return flag;
+	}
+	
+	
+}
+
+*****	
+	@Disabled
+	@Test
+	void pageLoadTest() throws InterruptedException, IOException {
+
+		//Throws TimeoutException
+//		driver.manage().timeouts().pageLoadTimeout(3, TimeUnit.SECONDS);
+
+		//throws InvalidArgumentException
+//		driver.manage().timeouts().pageLoadTimeout(-7, TimeUnit.SECONDS);
+
+		driver.manage().window().maximize();
+		
+		Instant startTime = Instant.now();
+		System.out.println(startTime.toString());
+		driver.get("https://novoproso.com/csr.html");
+		
+		Instant endTime = Instant.now();
+		System.out.println(endTime.toString());
+		Duration duration = Duration.between(startTime, endTime);
+		System.out.println("page Load Time: "+ duration.toMillis() + " millisecs");
+		System.out.println(driver.getTitle());
+		
+	}
+	
+	@Disabled
+	@Test
+	void ScreenShotTest() throws InterruptedException, IOException {
+//		driver.manage().window().maximize();
+//		driver.get("https://novoproso.com/csr.html");
+
+		remotedriver.manage().window().maximize();
+		remotedriver.get("https://novoproso.com/csr.html");
+//		remotedriver.getScreenshotAs(OutputType.FILE);
+		
+		//Full screenshot as file
+//		File screenshotsrcdata = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+//		File destFile = new File("./screenshots/image1.jpg");
+//		FileUtils.copyFile(screenshotsrcdata, destFile);
+//		System.out.println("screenshot saved successful");
+
+		//Full screenshot through bytes
+//		byte[] bytearr = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+//		File destFile = new File("./screenshots/imageBytes.jpg");
+//		FileOutputStream fos = new FileOutputStream(destFile);
+//		fos.write(bytearr);
+//		fos.close();
+//		System.out.println("screenshot saved successful");
+		
+		//Full screenshot through 
+		String base64code = remotedriver.getScreenshotAs(OutputType.BASE64);
+		byte[] byteArr = Base64.getDecoder().decode(base64code);
+		File destFile = new File("./screenshots/remoteimageBase64.jpg");
+		FileOutputStream fos = new FileOutputStream(destFile);
+		fos.write(byteArr);
+		fos.close();
+		System.out.println("screenshot saved successful");
+		
+		//footer screenshot
+//		jsExecutor.executeScript("window.scrollBy(0, document.body.scrollHeight)");
+//		WebElement section = driver.findElement(By.cssSelector("footer"));
+//		File footersrc = section.getScreenshotAs(OutputType.FILE);
+//		File footerdest = new File("./screenshots/footer.jpg");
+//		FileUtils.copyFile(footersrc, footerdest);
+//		System.out.println("screenshot saved successful");		
+	}
+-----------------------------------------
+***declare method in test:***
+static UtilTypes localtestMethod ;
+-----------------------------------------
+***declare method in @BeforeAll***
+localTestMethod = new UtilTypes();
+---------------------------------------------
+***not comming***
+mock geo location in web page
+Page.setGeolocationOverride(chrome dev tools protocal portal)
+latitude : 39.03565
+longitude: -93.73178
+
+38.773821373588966, -93.71801379630091
+
+Map<String, Object> mockLocation = new HashMap<String, Object>();
+mockLocation.put("latitude", 39.03565);
+mockLocation.put("longitude",-93.73178);
+mockLocation.put("accuracy",1);
+
+((ChromeDriver)driver).executeCdpCommand("Page.setGeolocationOverride",mockLocation);
+driver.get("novoproso link");
+-----------------------------------------
+http://makeseleniumeasy.com/2017/05/12/handling-webelement-textbox/
+https://www.lambdatest.com/blog/handling-dropdowns-in-selenium-webdriver-java/
+https://javabeginnerstutorial.com/selenium/9t-webdriver-handling-radio-buttons-checkboxes/
+
+Scroll up or down:
+https://www.browserstack.com/guide/selenium-scroll-tutorial
+
+isDisplayed Selected or isEnabled:
+https://www.browserstack.com/guide/isdisplayed-method-in-selenium
+
+Actions/interactions:
+https://www.geeksforgeeks.org/how-to-handle-action-class-in-selenium/
+
+-----------------------------------------
+Beginner concepts:
+* Screenshots
+* dropdown select
+* isDispayed/isSelected/isEnabled
+* findElement
+
+custom defined function in webdriverwait for explicitly wait:
+
+Function <WebDriver, Boolean> functionname = new Function <WebDriver, Boolean>(){
+
+@Override
+public Boolean apply(WebDriver driver){
+	//define anything here
+	return driver.findElement(By.id("idname")).isDisplayed();
+}
+};
+
+wait.until(functionname);
+
+other expressions for explicit wait:
+* using lambda expression
+wait.until(d -> driver.findElement(By.id("idname")).isDisplayed());
+* wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("idname")));
+
+
+**************
+* Fluentwait increases complexity
+
+		FluentWait<WebDriver> fluentwait = new FluentWait<WebDriver>(driver);
+		fluentwait.withTimeout(Duration.ofSeconds(5));
+**********************
+Error occurred while using webdrivermanager:
+
+java.lang.NoSuchMethodError: 'java.lang.String org.apache.commons.io.IOUtils.toString(java.io.InputStream, java.nio.charset.Charset)'
+
+<dependency>
+    <groupId>com.microsoft.edge</groupId>
+    <artifactId>msedge-selenium-tools-java</artifactId>
+    <version>3.141.1</version>
+</dependency>
+
+*********************
+JavascriptExecutor:
+
+inspect element from console
+
+static:
+id - document.getElementById('email');
+name - document.getElementsByName('email')[0];
+classname - document.getElementsByClassName('emailclass')[0];
+tagname - document.getElementsByTagName('input')[2];
+
+dynamic:
+css selector - document.querySelector('#email');
+xpath - document.evaluate("//input[@id='email']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+document.evaluate(xpathExpression,contexNode, namespaceResolver, resultType, result).singleNodeValue;
+
+namespaceResolver - only needed for xml documents
+
+element highlight:
+
+1 for border
+2. for background
+3. for border + background
+
+
+in console: 
+border:
+document.getElementById('email').style.border;
+document.getElementById('email').style.border = '2px solid red';
+
+background:
+document.getElementById('email').style.background = 'yellow';
+
+for both:
+javascriptExecutor.executeScript("document.getElementById('email').setAttribute('style', 'background: #FFFACD;border: 2px solid #FCF75E;')");
+
+
+Scroll:
+
+Scroll/ScrollTo
+ScrollBy
+ScrollIntoView
+
+document.getElementById("footer").scrollIntoView();
+
+*************************************************
+	@Disabled
+	@Test
+	void implicitWaitTest() throws InterruptedException, IOException {
+		driver.manage().window().maximize();
+		driver.manage().timeouts().implicitlyWait(6, TimeUnit.SECONDS);
+		driver.get("https://testproject.io");		
+		String parentWindow = driver.getWindowHandle();
+		driver.findElement(By.linkText("Login")).click();
+		
+		Set<String> windowHandles = driver.getWindowHandles();
+		for(String windowHandle : windowHandles) {
+			if(!windowHandle.equals(parentWindow)) {
+				driver.switchTo().window(windowHandle);
+				driver.findElement(By.id("username")).sendKeys("username");
+			}
+		}
+	}
+*******************************************************
+		String pageSource = driver.getPageSource();
+		System.out.println(pageSource);
+************************************************
+
+
+**********************************************
+move the cursor away from element
+		//move the cursor away
+//		Point servicesLinkLocation = servicesLink.getLocation();
+//		System.out.println(servicesLinkLocation);
+//		action.moveByOffset(servicesLinkLocation.x, servicesLinkLocation.y + 25);
+
+
+********************************************
+to send data to input in forms:
+
+method 1:
+inputElement.sendKeys("input data");
+
+method 2:
+WebDriver driver = new EdgeDriver();
+WebElement inputElement = driver.findElement(By.id("inputid"));
+JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("arguments[0].value='input data'", inputElement);
+-------------------------------------------------------------------------------------------------13/07/2024 
+removing [static] and creating instance per class to avoid errors at parallel execution
+@TestInstance(Lifecycle.PER_CLASS)
+-------------------------------------------------------
+scratch notes:
+utility:
+*BrowserSetup
+getBrowserSetUp
+getBrowserGridSetUp
+*FooterHighlight
+footerHighlightElement
+-footerLogoLink
+footerSocialIcons
+policyLink
+footerbottomCopyright
+footerbottomDesignedBy
+*Highlight
+highlightElement
+removeHighlightElement
+*MouseHover
+mouseHoverJScript
+isElementPresent
+
+---------
+public void driverWait(WebDriver driver) {
+		synchronized (driver) {
+			try {
+				driver.wait(2000);
+			}catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+			
+		}
+	}
+---------
+14-07-2024
+*about us
+
+// assert ul, li tags
+//		List<WebElement> ulElements = driver.findElements(By.cssSelector("ul"));
+//		assertEquals(6, ulElements.size());
+//		assertEquals(new Dimension(java.awt.Dimension[width=616,height=80]), ulElements.get(0).getSize());
+//		System.out.printf(ulElements.get(1).getSize().toString(),ulElements.get(2).getSize().toString(),ulElements.get(3).getSize().toString());
+////		assertEquals(new Dimension(616, 80), ulElements.get(1).getSize());
+////		assertEquals(new Dimension(616, 80), ulElements.get(2).getSize());
+////		assertEquals(new Dimension(616, 80), ulElements.get(3).getSize());
+//		assertEquals(new Dimension(616, 80), ulElements.get(4).getSize());
+//		assertEquals(new Dimension(616, 80), ulElements.get(5).getSize());
+
+		// whether ul tags are displayed or not
+//		assertTrue(ulElements.get(0).isDisplayed());
+//		assertTrue(ulElements.get(1).isDisplayed());
+//		assertTrue(ulElements.get(2).isDisplayed());
+//		assertTrue(ulElements.get(3).isDisplayed());
+//		assertTrue(ulElements.get(4).isDisplayed());
+//		assertTrue(ulElements.get(5).isDisplayed());
+---------------------
+contact us
+ContactFormManualTest
+//		jsExecutor.executeScript("arguments[0].value='test name'", nameInput);
+//		jsExecutor.executeScript("arguments[0].value='test@example.com'", emailInput);
+//		jsExecutor.executeScript("arguments[0].value='test subject'", subjectElement);
+//		jsExecutor.executeScript("arguments[0].value='test message'", messageElement);
+
+//		assertTrue(successMessage.isDisplayed());
+//		System.out.println(driver.findElement(By.className("text-success")).getText());
+
+// sample test not necessary
+		@Disabled
+		@Test
+		void test() {
+
+			driver.manage().window().maximize();
+//			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+//			driver.get("https://novoproso.com");
+	//
+//			wait = new WebDriverWait(driver, Duration.ofMillis(20000));
+//			elementWait = new WebDriverWait(driver, Duration.ofMillis(1000));
+//			
+//			wait.until(d-> driver.findElement(By.xpath("//a[contains(@class, 'btn-start')]")).isDisplayed());
+//			WebElement startnow = driver.findElements(By.xpath("//div[contains(@class,'caption')]/a")).get(0);
+//			elementWait.until(d -> startnow.isDisplayed());
+//			highlightElement(driver, startnow);
+//			startnow.click();
+	//
+//			//wait until about us link in the header appears
+//			elementWait.until(d -> driver.findElement(By.xpath("//li/a[@href='#about-us']")).isDisplayed());
+	//
+//			//go to contact us link and click
+//			WebElement contactLink = driver.findElement(By.xpath("//li/a[@href='#contact']"));
+//			highlightElement(driver, contactLink);
+//			action.moveToElement(contactLink).perform();
+//			contactLink.click();
+	//
+//			//From contact us section
+//			WebElement contactUsHeading = driver.findElement(By.xpath("//div[contains(@id, 'contact-us')]/div/div/div/h2"));
+	//
+//			//wait until contact us section is visible
+//			wait.until(d-> driver.findElement(By.xpath("//section[contains(@id, 'contact')]")).isDisplayed());
+//			wait.until(d -> contactUsHeading.isDisplayed());
+	//
+////			action.moveToElement(contactUsHeading).perform();
+	//
+//			//Form Handling
+//			WebElement nameInput = driver.findElement(By.xpath("//input[contains(@name,'name')]"));
+//			WebElement emailInput = driver.findElement(By.xpath("//input[contains(@name,'email')]"));
+//			WebElement subjectElement = driver.findElement(By.xpath("//input[contains(@name,'subject')]"));
+//			WebElement messageElement = driver.findElement(By.xpath("//textarea[contains(@name,'message')]"));
+////			WebElement submitButton = driver.findElement(By.xpath("//button[contains(@class,'btn-submit')]"));
+//			WebElement submitButton = driver.findElement(By.className("btn-submit"));
+	//
+////			jsExecutor.executeScript("arguments[0].value='test name'", nameInput);
+////			jsExecutor.executeScript("arguments[0].value='test@example.com'", emailInput);
+////			jsExecutor.executeScript("arguments[0].value='test subject'", subjectElement);
+////			jsExecutor.executeScript("arguments[0].value='test message'", messageElement);
+	//
+//			nameInput.sendKeys("test name");
+//			emailInput.sendKeys("test@example.com");
+//			subjectElement.sendKeys("test subject");
+//			messageElement.sendKeys("test message");
+	//
+//			jsExecutor.executeScript("arguments[0].scrollIntoView();", submitButton);
+//			wait.until(d -> submitButton.isDisplayed());
+//			
+//			action.moveToElement(submitButton).perform();
+//			assertTrue(submitButton.getCssValue("background-color").equals("rgb(66, 148, 79)"));
+//			submitButton.click();
+//			highlightElement(driver, submitButton);
+	//
+//			WebElement successMessage = driver.findElement(By.className("form_status"));
+//			jsExecutor.executeScript("arguments[0].scrollIntoView();", successMessage);
+//			wait.until(d -> successMessage.isDisplayed());
+//			
+//			assertTrue(successMessage.isDisplayed());
+//			System.out.println(driver.findElement(By.className("text-success")).getText());
+
+		}
+----------
+footer test
+	//scroll down until you find the page element *method
+//	WebElement footerBottomElemnet = driver.findElement(By.className("pull-right"));
+//	jsScript.executeScript("argument[0].scrollIntoView", footerBottomElemnet);
+
+//	elementWait.until(d -> spanLinkElements.getCssValue("color").equals("rgba(8, 8, 8, 1)"));
+//	elementWait.until(d -> spanLinkElements.getCssValue("color").equals("none solid rgba(252, 208, 93)"));
+
+
+//	elementWait.until(d -> driver.findElement(By.linkText("NOVO PROVIGILANCE LLC")).getCssValue("text-decoration").equals("none solid rgb(253, 217, 125)"));
+//	assertEquals("none solid rgb(253, 217, 125)", driver.findElement(By.linkText("NOVO PROVIGILANCE LLC")).getCssValue("text-decoration"));
+-------
+imageslide
+
+
+//		assertEquals("rgba(0, 0, 0, 0)", driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[5]/div/a")).getCssValue("background-color"));
+//		assertEquals("rgb(110, 109, 108)", driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[5]/div/a")).getCssValue("border-color"));
+
+
+//		highlightElement(driver, driver.findElements(By.xpath("//*[@id=\"home-slider\"]/div/div[5]/div/a")).get(0));
+
+
+//		System.out.println(driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[5]/div/a")).getText());
+
+
+//		assertEquals("rgba(255, 255, 255, 1)", driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[5]/div/a")).getCssValue("color"));
+		
+
+//		assertEquals("rgba(0, 0, 0, 0)", driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[6]/div/a")).getCssValue("background-color"));
+//		assertEquals("rgb(110, 109, 108)", driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[6]/div/a")).getCssValue("border-color"));
+
+
+//		assertEquals("rgba(255, 255, 255, 1)", driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[6]/div/a")).getCssValue("color"));
+		
+
+//		highlightElement(driver, driver.findElements(By.xpath("//*[@id=\"home-slider\"]/div/div[6]/div/a")).get(0));
+		
+
+//		System.out.println(driver.findElement(By.xpath("//*[@id=\"home-slider\"]/div/div[6]/div/a")).getText());
+----------------
+Main page
+
+//	WebDriver driver;
+//	WebDriverWait wait, imageSliderWait, imageWait, elementWait, initialWait;
+//	RemoteWebDriver remotedriver; // it includes JavascriptExecutor, TakesScreenshot functionality
+//	Actions action;
+//	JavascriptExecutor jsScript;
+//	SeleniumManager driverManager;
+//	ChromeOptions chromeoptions;
+//	Highlight highlightElement;
+	
+//	 WebDriver driver;
+	 RemoteWebDriver driver;
+	 DesiredCapabilities capabilities_chrome;
+	
+	 JavascriptExecutor jsExecutor;
+	 WebDriverWait wait, imageWait, elementWait;
+	 Actions action;
+	 ChromeOptions chromeoptions;
+	 String excelFilePath = "./testFiles/contactFormTestData.xls";
+	 Object[][] contacttestData;
+
+cookiePolicyTest
+//		assertTrue(cookieNewLocation.getLocation().equals(cookieLocation.getLocation()));
+
+headerEvents
+
+/*
+		 * List<WebElement> button = driver.findElements(By.className("btn"));
+		 * System.out.println(button); assertEquals(13, button.size());
+		 * assertEquals("START NOW", button.get(0).getText()); Thread.sleep(1000);
+		 * 
+		 * assertFalse(button.get(1).isDisplayed()); Thread.sleep(1000);
+		 * 
+		 * button.get(0).click(); Thread.sleep(1000);
+		 */
+
+
+//		System.out.println("home nav element : " + homeLink.getText());
+		
+	// close cookies click
+//		WebElement closeUp = driver.findElement(By.xpath("//button[contains(@class,'cookie-btn')]"));
+//		closeUp.click();
+//		Thread.sleep(200);
+----------
+aboutUsSectionTest
+//		assertEquals("About us", driver.findElement(By.xpath("//h2[.='About us']")).getText());
+
+productsSectionTest
+//		productsLink.click();
+
+//			elementWait.until(d -> product.isDisplayed());
+
+productsSectionLinksTest
+
+//		actions.moveToElement(productReadMoreLink).perform();
+
+ServicesSectionTest
+
+		// wait until products section is visible
+//		elementWait.until(d -> servicesHeading.isDisplayed());
+
+//		System.out.println("Main Heading in Services: " + servicesHeading);
+//		assertEquals("::Services::", servicesHeading.getText());
+
+//div[contains(@class,'our-services')]/div/div/div[contains(@class,'service-icon')]/img//9
+
+	//div[contains(@class,'service-info')]/p/a//9
+
+careersSectionTest
+
+		// close cookie
+//		driver.findElement(By.xpath("//button[contains(@class,'cookie-btn')]")).click();
+
+// heading block background color
+//		assertEquals("rgb(220, 245, 214)",
+//				driver.findElement(By.xpath("//div[contains(@class,'row')]/div[contains(@class,'heading')]"))
+//						.getCssValue("background-color"));//2
+
+//		assertEquals("rgb(57, 144, 30)", subHeading.getCssValue("color"));
+
+//		assertEquals("rgb(128, 128, 128)", contactMailElement.getCssValue("color"));
+//		assertEquals("rgb(57, 144, 30)", driver
+//				.findElement(By.xpath("//section[contains(@id,'career')]/div/div/div/h4/span")).getCssValue("color"));
+//		assertEquals("600", driver.findElement(By.xpath("//section[contains(@id,'career')]/div/div/div/h4/span"))
+//				.getCssValue("font-weight"));
+
+//			System.out.println(career.getText());
+
+ContactSectionTest
+//		contactLink.click();
+
+		// wait until contact us section is visible
+//		elementWait.until(d -> contactUsHeading.isDisplayed());
+
+//		assertEquals("Contact Us", contactUsHeading.getText());
+
+//		Thread.sleep(3000);
+
+		// map
+		/*
+		 * WebElement mapElement = driver.findElement(By.
+		 * xpath("//div[contains(@class, 'contact-info')]/ul/li/iframe"));
+		 * driver.findElement(By.
+		 * xpath("//div[contains(@class, 'contact-info')]/ul/li/iframe"));
+		 * driver.switchTo().frame(mapElement);
+		 */
+
+footerEvents
+//		  action.moveToElement(policy).perform(); Thread.sleep(1000); // color check
+
+// recaptcha
+
+		/*
+		 * WebElement recaptCha =
+		 * driver.findElement(By.id("recaptcha-accessible-status"));
+		 * recaptCha.isDisplayed(); action.moveToElement(recaptCha).build().perform();
+		 * 
+		 * action.click();
+		 */
+	}
+
+	/*
+	 * Map<String, Object> mockLocation = new HashMap<String, Object>();
+	 * mockLocation.put("latitude", 39.03565);
+	 * mockLocation.put("longitude",-93.73178); mockLocation.put("accuracy",1);
+	 * 
+	 * ((ChromiumDriver)
+	 * driver).executeCdpCommand("Page.setGeolocationOverride",mockLocation);
+	 * driver.navigate().refresh(); driver.navigate().to("http://novoproso.com/");
+	 */
+------
+productssection
+DSANPageTest
+
+	//wait until about us dropdown appears
+//		elementWait.until(d-> productsDropdownElement.isDisplayed());
+//		Thread.sleep(200);
+
+ //assert ul, li tags List<WebElement> ulElements =
+//		  driver.findElements(By.cssSelector("ul")); assertEquals(7,
+//		  ulElements.size()); assertEquals(new Dimension(616,80),
+//		  ulElements.get(0).getSize());
+//		  System.out.printf(ulElements.get(1).getSize().toString(),ulElements.get(2).
+//		  getSize().toString(),ulElements.get(3).getSize().toString()); //
+//		  assertEquals(new Dimension(750, 140), ulElements.get(1).getSize()); //
+//		  assertEquals(new Dimension(750, 140), ulElements.get(2).getSize()); //
+//		  assertEquals(new Dimension(750, 140), ulElements.get(3).getSize());
+//		  assertEquals(new Dimension(750, 96), ulElements.get(4).getSize());
+//		  assertEquals(new Dimension(750, 120), ulElements.get(5).getSize());
+//		  assertEquals(new Dimension(124, 36), ulElements.get(6).getSize());
+//		  
+//		  //
+//		  System.out.println(ulElements.getLast().findElement(By.tagName("li")).getText
+//		  ());//mistake //whether ul tags are displayed or not
+//		  assertTrue(ulElements.get(0).isDisplayed());
+//		  assertFalse(ulElements.get(1).isDisplayed());
+//		  assertFalse(ulElements.get(2).isDisplayed());
+//		  assertFalse(ulElements.get(3).isDisplayed());
+//		  assertTrue(ulElements.get(4).isDisplayed());
+//		  assertTrue(ulElements.get(5).isDisplayed());
+		 
+
+		//check for li tags
+
+//		  highlightElement(driver, ulElements.get(6));
+//		  assertTrue(ulElements.get(6).isDisplayed());
+--------------
+service section
+cpPageTest
+//assert ul, li tags
+		/*
+		 * List<WebElement> ulElements = driver.findElements(By.cssSelector("ul"));
+		 * assertEquals(6, ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(746, 120),
+		 * ulElements.get(4).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(5).getSize());
+		 */
+
+		//whether ul tags are displayed or not
+		/*
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 * assertTrue(ulElements.get(4).isDisplayed());
+		 */
+
+		//check for li tags
+
+
+		/*
+		 * highlightElement(driver, ulElements.get(5));
+		 * assertTrue(ulElements.get(5).isDisplayed()); Thread.sleep(1000);
+		 */
+
+miccPageTest
+	//Direct URL
+
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(5,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(4).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 */		
+//		Thread.sleep(1000);
+		jsExecutor.executeScript("window.scrollBy(0,600)");
+//		Thread.sleep(1000);
+
+//		driver.get("https://novoprovigilance.com/sd.html");
+
+	/*
+		 * highlightElement(driver, ulElements.get(4));
+		 * assertTrue(ulElements.get(4).isDisplayed()); Thread.sleep(1000);
+		 */
+
+bigDataPageTest
+	//Direct URL
+//		driver.get("https://novoprovigilance.com/itstaff.html");
+
+//wait until Services dropdown appears
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(5,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(4).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 */
+
+/*
+		 * wait.until(ExpectedConditions.visibilityOf(ulElements.get(4)));
+		 * highlightElement(driver, ulElements.get(4));
+		 * assertTrue(ulElements.get(4).isDisplayed()); Thread.sleep(1000);
+		 */
+lmPageTest
+	//Direct URL
+//		driver.get("https://novoprovigilance.com/cloud.html");
+
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(6,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(750, 120),
+		 * ulElements.get(4).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(5).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 * assertTrue(ulElements.get(4).isDisplayed());
+		 */
+
+/*
+		 * wait.until(d-> ulElements.get(5).isDisplayed()); highlightElement(driver,
+		 * ulElements.get(5)); assertTrue(ulElements.get(5).isDisplayed());
+		 * Thread.sleep(1000);
+		 */
+
+sdrmPageTest
+		//Direct URL
+//		driver.get("https://novoprovigilance.com/ai.html");
+
+//wait until Services dropdown appears
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+//		Thread.sleep(500);
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(6,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(746, 144),
+		 * ulElements.get(4).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(5).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 */
+
+/*
+		 * wait.until(ExpectedConditions.visibilityOf(ulElements.get(5)));
+		 * highlightElement(driver, ulElements.get(5));
+		 * assertTrue(ulElements.get(5).isDisplayed()); Thread.sleep(1000);
+		 */
+
+arPageTest
+		//wait until Services dropdown appears
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+//		Thread.sleep(500);
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(7,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(750, 120),
+		 * ulElements.get(4).getSize()); assertEquals(new Dimension(750, 120),
+		 * ulElements.get(5).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(6).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 * assertTrue(ulElements.get(4).isDisplayed());
+		 * assertTrue(ulElements.get(5).isDisplayed());
+		 */
+
+/*
+		 * wait.until(d->ulElements.get(6).isDisplayed()); highlightElement(driver,
+		 * ulElements.get(6)); assertTrue(ulElements.get(6).isDisplayed());
+		 * Thread.sleep(1000);
+		 */
+HRAPageTest
+//wait until Services dropdown appears
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(7,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(750, 120),
+		 * ulElements.get(4).getSize()); assertEquals(new Dimension(750, 120),
+		 * ulElements.get(5).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(6).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 * assertTrue(ulElements.get(4).isDisplayed());
+		 * assertTrue(ulElements.get(5).isDisplayed());
+		 */
+
+/*
+		 * wait.until(d-> ulElements.get(6).isDisplayed()); highlightElement(driver,
+		 * ulElements.get(6)); assertTrue(ulElements.get(6).isDisplayed());
+		 * Thread.sleep(1000);
+		 */
+
+mspvmsPageTest
+//wait until Services dropdown appears
+//		elementWait.until(d -> servicesDropdownElement.isDisplayed());
+
+/*
+		 * //assert ul, li tags List<WebElement> ulElements =
+		 * driver.findElements(By.cssSelector("ul")); assertEquals(6,
+		 * ulElements.size()); assertEquals(new Dimension(616,80),
+		 * ulElements.get(0).getSize()); assertEquals(new Dimension(750, 168),
+		 * ulElements.get(4).getSize()); assertEquals(new Dimension(124, 36),
+		 * ulElements.get(5).getSize());
+		 * 
+		 * //whether ul tags are displayed or not
+		 * assertTrue(ulElements.get(0).isDisplayed());
+		 * assertFalse(ulElements.get(1).isDisplayed());
+		 * assertFalse(ulElements.get(2).isDisplayed());
+		 * assertFalse(ulElements.get(3).isDisplayed());
+		 * assertTrue(ulElements.get(4).isDisplayed());
+		 */
+
+/*
+		 * wait.until(ExpectedConditions.visibilityOf(ulElements.get(5)));
+		 * highlightElement(driver, ulElements.get(5));
+		 * assertTrue(ulElements.get(5).isDisplayed()); Thread.sleep(1000);
+		 */
+-----------
+Main page mobile view
+productsSectionTest
+
+//					actions.moveToElement(productReadMoreLink.get(index)).build().perform();
+//					wait.until(ExpectedConditions.attributeToBe(productReadMoreLink.get(index), "color", "rgba(57, 144, 30, 1)"));
+//					assertEquals("rgba(57, 144, 30, 1)", productReadMoreLink.get(index).getCssValue("color"));
+//					assertEquals("2.4px solid rgb(128, 199, 131)", productReadMoreLink.get(index).getCssValue("border"));
+
+loopProductsLinkTest
+
+//close cookie button
+//			driver.findElement(By.xpath("//div[contains(@class,'cookie-container')]/p/button")).click();
+
+ServicesSectionTest
+//				assertEquals("rgba(57, 144, 30, 1)", serviceReadMoreLink.get(index).getCssValue("color"));
+//				assertEquals("2.4px solid rgb(128, 199, 131)", serviceReadMoreLink.get(index).getCssValue("border"));
+
+loopServicesLinkTest
+//			elementWait.until(d -> services.get(0).isDisplayed());
+
+//				wait.until(ExpectedConditions.urlToBe("https://novoproso.com/hra.html"));	
+
+ContactSectionTest
+
+
+			/*
+			 * Map<String, Object> mockLocation = new HashMap<String, Object>();
+			 * mockLocation.put("latitude", 39.03565);
+			 * mockLocation.put("longitude",-93.73178); mockLocation.put("accuracy",1);
+			 * 
+			 * ((ChromiumDriver)
+			 * driver).executeCdpCommand("Page.setGeolocationOverride",mockLocation);
+			 * driver.navigate().refresh(); driver.navigate().to("http://novoproso.com/");
+			 */	
+---------
+prod Mobile view
+DANPageTest
+//Direct URL
+//			driver.get("https://novoproso.com/DAN.html");
+------
+service section mobile view
+//Direct URL
+//			driver.get("https://novoproso.com/idea.html");
+
+----
+service section mobile view
+HRAPageTest
+
+//			action.moveToElement(servicesLink).perform();
+----

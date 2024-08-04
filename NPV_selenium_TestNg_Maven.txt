@@ -1,0 +1,74 @@
+project name : NpvSeleniumTest
+https://novoprovigiance.com(developed ad depoyed)
+
+AUT : Novoprovigilance - Web application
+
+-Outline of project
+Selenium[Hybrid Framework]  + IDE [Eclipse] + TestNG  +  Maven + Reports + logs 
+TestNG : Test Cases + Design Pattern [POM (PF)]+ Utilities 
+
+Test Scenario :
+1. Test Home page features and functionality
+2. Test Contact Form
+
+Test cases for test scenario - Test Home page features and functionality
+1. Test Start Now Button
+2. Test Home page
+3. Test Cookie container
+
+Test cases for test scenario - Test Contact Form
+1. Data-Driven test for contact form
+
+*********** Project Explain ***********
+
+AUT [Application Under Test] NPV project(uses spring boot as frame work),  
+
+Selenium  +  TestNG  +  Maven  + [HTML + Emailable] Reports + logs + config properties
+TestNG : Test Cases + Design Pattern [POM (PF)+ BaseClass ] + Utilities
+
+
+Contact Us: DATA - DRIVEN
+- Tested Contact form with different data.
+-----------------------------------------
+Cookie policy:
+- tested policy link and close button
+- tested its visibility through its location
+-----------------------------------------
+Main page:
+- tested image slider and printed elements text to console
+- tested startnow link and its styles when its hovered
+- tested navbar links 
+- tested navbar link dropdowns
+- tested all links in dropdown pages
+
+------------------MAIN HEADINGS-----------------------
+About us section:
+- tested background image
+- tested styles
+- logged headings text to console and log file
+- highlighted headings
+-----------------------------------------
+Products section:
+- tested headings along with styles
+- logged them to console and log file
+- tested each product and its elements and links
+-----------------------------------------
+Services section:
+- tested headings along with styles
+- logged them to console and log file
+- tested each product and its elements and links
+-----------------------------------------
+Careers section:
+- tested headings along with styles
+- logged them to console and log file
+- tested each career card and its elements and links
+- tested job details model and its content printed to the console
+---------------------------Concepts----------------------------
+JAVA concepts
+OOPS 
+-----------------------------------------
+SELENIUM concepts
+Hybrid Framework [Data Driven + Keyword Driven] 
+-----------------------------------------
+TestNG concepts
+
